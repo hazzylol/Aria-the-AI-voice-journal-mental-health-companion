@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aria — Voice Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesque:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #E7E0D4; font-family: 'Hanken Grotesque', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; }
+
+  /* breathing rings on the home mic */
+  @keyframes micPulse {
+    0%   { transform: scale(1);   opacity: 0.55; }
+    70%  { transform: scale(1.55); opacity: 0; }
+    100% { transform: scale(1.55); opacity: 0; }
+  }
+  .mic-ring { animation: micPulse 3.4s ease-out infinite; }
+  .mic-ring-2 { animation-delay: 1.7s; }
+  .mic-btn { transition: transform .2s ease; }
+  .mic-btn:active { transform: scale(0.95); }
+
+  /* live recording waveform */
+  @keyframes recBar {
+    0%, 100% { height: 12%; opacity: 0.55; }
+    50%      { height: 92%; opacity: 1; }
+  }
+  .rec-bar { height: 30%; animation: recBar 1s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mic-ring, .rec-bar { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="android-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="journal-ui.jsx"></script>
+<script type="text/babel" src="journal-screens.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentHex": "#5E8472",
+  "dark": false
+}/*EDITMODE-END*/;
+
+const ACCENT_KEY = { '#5e8472': 'sage', '#c08763': 'clay', '#8278b0': 'lavender', '#5e7c96': 'dusk' };
+
+function Root() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const accent = ACCENT_KEY[(t.accentHex || '').toLowerCase()] || 'sage';
+  const dark = t.dark;
+
+  const screens = [
+    { id: 'home', label: 'Home · Today', initial: 'home' },
+    { id: 'reflection', label: 'Reflection', initial: 'reflection' },
+    { id: 'insights', label: 'Mood · Insights', initial: 'insights' },
+  ];
+
+  return (
+    <React.Fragment>
+      <DesignCanvas>
+        <DCSection id="app" title="Aria — Voice Journal" subtitle="AI voice journal & mental-health companion · Android">
+          {screens.map(s => (
+            <DCArtboard key={s.id + accent + dark} id={s.id} label={s.label} width={412} height={892}>
+              <JournalApp accent={accent} dark={dark} initial={s.initial} />
+            </DCArtboard>
+          ))}
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel>
+        <TweakSection label="Mood & tone" />
+        <TweakColor label="Accent" value={t.accentHex}
+          options={['#5E8472', '#C08763', '#8278B0', '#5E7C96']}
+          onChange={(v) => setTweak('accentHex', v)} />
+        <TweakToggle label="Night mode" value={dark} onChange={(v) => setTweak('dark', v)} />
+      </TweaksPanel>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
